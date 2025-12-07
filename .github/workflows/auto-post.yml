@@ -9,7 +9,13 @@ on:
     # 13:30 UTC = ~7:00 PM IST
     # 16:30 UTC = ~10:00 PM IST
     - cron: '30 2,7,10,13,16 * * *'
-  workflow_dispatch:
+  workflow_dispatch:  # Allow manual triggers
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   run-bot:
@@ -17,12 +23,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
