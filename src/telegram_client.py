@@ -4,18 +4,38 @@ from .config import BOT_TOKEN, CHAT_ID
 BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}"
 
 
-def send_text(text: str):
+def add_social_footer(text: str) -> str:
+    """Add social media links footer with emoji icons to the post."""
+    footer = """
+
+━━━━━━━━━━━━━━━━━━━━
+📱 **Follow for more:**
+[📷](https://instagram.com/kreggscode) [🐦](https://twitter.com/kreggscode) [▶️](https://youtube.com/@kreggscode) [💬](https://t.me/kreggscode) [📘](https://facebook.com/kreggscode) [🎮](https://play.google.com/store/apps/dev?id=4822923174061161987)
+"""
+    return text + footer
+
+
+def send_text(text: str, add_footer: bool = True):
+    """Send text message with optional social media footer."""
+    if add_footer:
+        text = add_social_footer(text)
+    
     url = f"{BASE_URL}/sendMessage"
     data = {
         "chat_id": CHAT_ID,
         "text": text,
-        "parse_mode": "Markdown"
+        "parse_mode": "Markdown",
+        "disable_web_page_preview": True  # Prevent link previews for cleaner posts
     }
     resp = requests.post(url, data=data)
     return resp
 
 
-def send_photo(image_url: str, caption: str = ""):
+def send_photo(image_url: str, caption: str = "", add_footer: bool = True):
+    """Send photo with optional social media footer in caption."""
+    if add_footer and caption:
+        caption = add_social_footer(caption)
+    
     url = f"{BASE_URL}/sendPhoto"
     data = {
         "chat_id": CHAT_ID,
