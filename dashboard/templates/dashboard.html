@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card-grid">
+    <div class="card">
+        <h2>🛡️ Cyber Security Post</h2>
+        <p>Generate and send a random cybersecurity tip with code snippet.</p>
+        <a href="{{ url_for('send_cyber_post') }}" class="btn">Send to Channel</a>
+    </div>
+</div>
+{% endblock %}

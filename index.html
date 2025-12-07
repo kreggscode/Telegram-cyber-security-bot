@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>KreggsCode - AI Coding Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #13131a;
+            --bg-tertiary: #1a1a24;
+            --bg-card: rgba(26, 26, 36, 0.95);
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-tertiary: #ec4899;
+            --text-primary: #ffffff;
+            --text-secondary: #a1a1aa;
+            --text-tertiary: #71717a;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gradient-1: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --gradient-2: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            --gradient-3: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            --gradient-4: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            position: fixed;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .bg-gradient {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.2;
+            animation: float 20s infinite ease-in-out;
+        }
+
+        .bg-gradient-1 {
+            background: var(--gradient-1);
+            top: -250px;
+            left: -250px;
+            animation-delay: 0s;
+        }
+
+        .bg-gradient-2 {
+            background: var(--gradient-2);
+            bottom: -250px;
+            right: -250px;
+            animation-delay: 7s;
+        }
+
+        .bg-gradient-3 {
+            background: var(--gradient-3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation-delay: 14s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(60px, -60px) scale(1.15);
+            }
+
+            66% {
+                transform: translate(-60px, 60px) scale(0.85);
+            }
+        }
+
+        /* Container - Full Screen */
+        .container {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: rgba(10, 10, 15, 0.6);
+            backdrop-filter: blur(20px);
+        }
+
+        /* Header */
+        .header {
+            padding: env(safe-area-inset-top, 16px) 20px 16px;
+            background: var(--bg-card);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo {
+            width: 52px;
+            height: 52px;
+            background: var(--gradient-1);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 900;
+            box-shadow: var(--shadow-glow);
+            animation: pulse 3s infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                box-shadow: var(--shadow-glow);
+            }
+
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 35px rgba(99, 102, 241, 0.6);
+            }
+        }
+
+        .brand-info h1 {
+            font-size: 22px;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 6px;
+        }
+
+        .social-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .social-icon svg {
+            width: 16px;
+            height: 16px;
+            fill: white;
+            position: relative;
+            z-index: 1;
+        }
+
+        .social-icon::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .social-icon:active::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .social-icon:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .social-icon.instagram {
+            background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+            box-shadow: 0 4px 12px rgba(253, 29, 29, 0.3);
+        }
+
+        .social-icon.youtube {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+        }
+
+        .social-icon.playstore {
+            background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);
+            box-shadow: 0 4px 12px rgba(52, 168, 83, 0.3);
+        }
+
+        .social-icon.website {
+            background: var(--gradient-1);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding-bottom: 2px;
+            padding-right: 4px;
+        }
+
+        .tab-nav::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: visible;
+            line-height: 1.2;
+        }
+
+        .tab-btn span {
+            position: relative;
+            z-index: 1;
+            display: inline-block;
+        }
+
+        .tab-btn.active {
+            background: var(--gradient-1);
+            color: var(--text-primary);
+            border-color: transparent;
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-1px);
+        }
+
+        .tab-btn:hover:not(.active) {
+            border-color: var(--accent-primary);
+            transform: translateY(-1px);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        /* Main Content - Full Screen */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-md);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.3px;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 3px;
+            font-weight: 500;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Input Fields */
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            letter-spacing: -0.2px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 18px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s;
+            resize: vertical;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+            background: var(--bg-secondary);
+        }
+
+        textarea.input-field {
+            min-height: 140px;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1.6;
+        }
+
+        select.input-field {
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Code Display */
+        .code-output {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 0;
+            margin-top: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 18px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .code-lang {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .copy-btn {
+            padding: 8px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent-primary);
+            color: var(--accent-primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .code-content {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Chat Messages */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 20px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+
+        .message {
+            padding: 16px 18px;
+            border-radius: 18px;
+            max-width: 90%;
+            animation: slideIn 0.4s ease-out;
+            box-shadow: var(--shadow-sm);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message.user {
+            background: var(--gradient-1);
+            align-self: flex-end;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.ai {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message-text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .message-time {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        /* Topic Grid */
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .topic-card {
+            padding: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .topic-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--accent-primary);
+        }
+
+        .topic-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .topic-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.2px;
+        }
+
+        /* Tips Card */
+        .tip-card {
+            background: var(--gradient-1);
+            border-radius: 20px;
+            padding: 26px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .tip-card::before {
+            content: '💡';
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            font-size: 140px;
+            opacity: 0.15;
+            filter: blur(2px);
+        }
+
+        .tip-category {
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            opacity: 0.95;
+        }
+
+        .tip-text {
+            font-size: 17px;
+            line-height: 1.7;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 16px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .loading-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .empty-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            opacity: 0.6;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .empty-text {
+            font-size: 18px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .empty-subtext {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--success);
+            margin-top: 12px;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Responsive - Ensure full width on all devices */
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+            }
+
+            .header {
+                padding: 14px 16px;
+            }
+
+            .main-content {
+                padding: 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .topic-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .social-links {
+                gap: 8px;
+            }
+
+            .social-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .social-icon svg {
+                width: 18px;
+                height: 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-gradient bg-gradient-1"></div>
+        <div class="bg-gradient bg-gradient-2"></div>
+        <div class="bg-gradient bg-gradient-3"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="logo-section">
+                    <div class="logo">KC</div>
+                    <div class="brand-info">
+                        <h1>KreggsCode</h1>
+                        <p>AI Coding Assistant</p>
+                    </div>
+                </div>
+                <div class="social-links">
+                    <a href="https://www.instagram.com/kreggscode/" target="_blank" class="social-icon instagram"
+                        title="Instagram">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                        </svg>
+                    </a>
+                    <a href="https://www.youtube.com/@kreggscode" target="_blank" class="social-icon youtube"
+                        title="YouTube">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                        </svg>
+                    </a>
+                    <a href="https://play.google.com/store/apps/dev?id=4822923174061161987" target="_blank"
+                        class="social-icon playstore" title="Google Play Store">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 0 1-.61-.92V2.734a1 1 0 0 1 .609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 0 1 0 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z" />
+                        </svg>
+                    </a>
+                    <a href="https://kreggscode.com/" target="_blank" class="social-icon website" title="Website">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <nav class="tab-nav">
+                <button class="tab-btn active" data-tab="code"><span>💻 Code Gen</span></button>
+                <button class="tab-btn" data-tab="chat"><span>💬 AI Chat</span></button>
+                <button class="tab-btn" data-tab="topics"><span>📚 Topics</span></button>
+                <button class="tab-btn" data-tab="tips"><span>✨ Tips</span></button>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Code Generator Tab -->
+            <div class="tab-content active" id="code-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--gradient-1);">💻</div>
+                        <div>
+                            <div class="card-title">AI Code Generator</div>
+                            <div class="card-subtitle">Powered by Pollinations AI</div>
+                        </div>
+                    </div>
+
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span>AI Online</span>
+                    </div>
+
+                    <div class="input-group" style="margin-top: 20px;">
+                        <label class="input-label">Programming Language</label>
+                        <select class="input-field" id="code-language">
+                            <option value="python">🐍 Python</option>
+                            <option value="javascript">⚡ JavaScript</option>
+                            <option value="typescript">📘 TypeScript</option>
+                            <option value="java">☕ Java</option>
+                            <option value="cpp">⚙️ C++</option>
+                            <option value="csharp">🎯 C#</option>
+                            <option value="go">🔵 Go</option>
+                            <option value="rust">🦀 Rust</option>
+                            <option value="kotlin">🎨 Kotlin</option>
+                            <option value="swift">🍎 Swift</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">Describe what you want to build</label>
+                        <textarea class="input-field" id="code-prompt"
+                            placeholder="Example: Create a REST API with authentication using JWT tokens..."></textarea>
+                    </div>
+
+                    <button class="btn" onclick="generateCode()" id="generate-btn">
+                        <span>🚀 Generate Code with AI</span>
+                    </button>
+
+                    <div class="loading" id="code-loading">
+                        <div class="spinner"></div>
+                        <div class="loading-text">AI is generating your code...</div>
+                    </div>
+
+                    <div id="code-result"></div>
+                </div>
+            </div>
+
+            <!-- AI Chat Tab -->
+            <div class="tab-content" id="chat-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--gradient-2);">💬</div>
+                        <div>
+                            <div class="card-title">AI Assistant</div>
+                            <div class="card-subtitle">Ask anything about coding</div>
+                        </div>
+                    </div>
+
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span>AI Online</span>
+                    </div>
+
+                    <div class="chat-container" id="chat-messages" style="margin-top: 20px;">
+                        <div class="empty-state">
+                            <div class="empty-icon">🤖</div>
+                            <div class="empty-text">Start a conversation</div>
+                            <div class="empty-subtext">Ask me about Python, ML, blockchain, or anything!</div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <textarea class="input-field" id="chat-input"
+                            placeholder="Ask me anything about coding, ML, blockchain..." rows="3"></textarea>
+                    </div>
+
+                    <button class="btn" onclick="sendMessage()" id="chat-btn">
+                        <span>📤 Send Message</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Topics Tab -->
+            <div class="tab-content" id="topics-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--gradient-3);">📚</div>
+                        <div>
+                            <div class="card-title">Learning Topics</div>
+                            <div class="card-subtitle">Explore different areas</div>
+                        </div>
+                    </div>
+
+                    <div class="topic-grid">
+                        <div class="topic-card" onclick="exploreTopic('Python Programming')">
+                            <div class="topic-icon">🐍</div>
+                            <div class="topic-name">Python</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Machine Learning')">
+                            <div class="topic-icon">🤖</div>
+                            <div class="topic-name">Machine Learning</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Blockchain')">
+                            <div class="topic-icon">⛓️</div>
+                            <div class="topic-name">Blockchain</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Web Development')">
+                            <div class="topic-icon">🌐</div>
+                            <div class="topic-name">Web Dev</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Data Science')">
+                            <div class="topic-icon">📊</div>
+                            <div class="topic-name">Data Science</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Algorithms')">
+                            <div class="topic-icon">🧮</div>
+                            <div class="topic-name">Algorithms</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('DevOps')">
+                            <div class="topic-icon">⚙️</div>
+                            <div class="topic-name">DevOps</div>
+                        </div>
+                        <div class="topic-card" onclick="exploreTopic('Cybersecurity')">
+                            <div class="topic-icon">🔒</div>
+                            <div class="topic-name">Security</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="topic-content"></div>
+            </div>
+
+            <!-- Tips Tab -->
+            <div class="tab-content" id="tips-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--gradient-4);">✨</div>
+                        <div>
+                            <div class="card-title">Daily Tips & Motivation</div>
+                            <div class="card-subtitle">AI-powered insights</div>
+                        </div>
+                    </div>
+
+                    <div class="status-badge">
+                        <span class="status-dot"></span>
+                        <span>AI Online</span>
+                    </div>
+
+                    <button class="btn" onclick="generateTip()" id="tip-btn" style="margin-top: 20px;">
+                        <span>🎲 Get AI-Generated Tip</span>
+                    </button>
+
+                    <div class="loading" id="tip-loading">
+                        <div class="spinner"></div>
+                        <div class="loading-text">AI is generating tip...</div>
+                    </div>
+
+                    <div id="tip-result"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Pollinations AI API Configuration
+        const POLLINATIONS_API = 'https://text.pollinations.ai/';
+
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Generate Code with Pollinations AI
+        async function generateCode() {
+            const language = document.getElementById('code-language').value;
+            const prompt = document.getElementById('code-prompt').value;
+            const loading = document.getElementById('code-loading');
+            const result = document.getElementById('code-result');
+            const btn = document.getElementById('generate-btn');
+
+            if (!prompt.trim()) {
+                alert('Please describe what you want to build!');
+                return;
+            }
+
+            loading.style.display = 'block';
+            result.innerHTML = '';
+            btn.disabled = true;
+
+            try {
+                const fullPrompt = `You are an expert ${language} programmer. Generate clean, production-ready code for the following request. Include comments and best practices. Request: ${prompt}`;
+
+                const response = await fetch(POLLINATIONS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: fullPrompt
+                            }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI API request failed');
+                }
+
+                const code = await response.text();
+
+                loading.style.display = 'none';
+
+                result.innerHTML = `
+                    <div class="code-output">
+                        <div class="code-header">
+                            <span class="code-lang">${language}</span>
+                            <button class="copy-btn" onclick="copyCode(this)">📋 Copy</button>
+                        </div>
+                        <pre class="code-content">${escapeHtml(code)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                loading.style.display = 'none';
+                result.innerHTML = `
+                    <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: var(--error);">
+                        <p style="color: var(--error); font-weight: 600;">⚠️ Error generating code. Please try again.</p>
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Chat with AI
+        let chatHistory = [];
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            const btn = document.getElementById('chat-btn');
+
+            if (!message) return;
+
+            const chatContainer = document.getElementById('chat-messages');
+
+            if (chatHistory.length === 0) {
+                chatContainer.innerHTML = '';
+            }
+
+            addMessage('user', message);
+            input.value = '';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(POLLINATIONS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'system',
+                                content: 'You are KreggsCode AI Assistant, an expert in Python, Machine Learning, Blockchain, Computer Science, and programming. Provide helpful, concise, and accurate answers.'
+                            },
+                            ...chatHistory.map(msg => ({
+                                role: msg.type === 'user' ? 'user' : 'assistant',
+                                content: msg.text
+                            })),
+                            {
+                                role: 'user',
+                                content: message
+                            }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('AI API request failed');
+                }
+
+                const aiResponse = await response.text();
+                addMessage('ai', aiResponse);
+            } catch (error) {
+                addMessage('ai', '⚠️ Sorry, I encountered an error. Please try again.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function addMessage(type, text) {
+            const chatContainer = document.getElementById('chat-messages');
+            const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerHTML = `
+                <div class="message-text">${escapeHtml(text)}</div>
+                <div class="message-time">${time}</div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            chatHistory.push({ type, text, time });
+        }
+
+        // Enter to send
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatInput = document.getElementById('chat-input');
+            if (chatInput) {
+                chatInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+
+            const codePrompt = document.getElementById('code-prompt');
+            if (codePrompt) {
+                codePrompt.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter' && e.ctrlKey) {
+                        e.preventDefault();
+                        generateCode();
+                    }
+                });
+            }
+        });
+
+        // Explore Topics with AI
+        async function exploreTopic(topic) {
+            const topicContent = document.getElementById('topic-content');
+
+            topicContent.innerHTML = `
+                <div class="card">
+                    <div class="loading" style="display: block;">
+                        <div class="spinner"></div>
+                        <div class="loading-text">Loading ${topic} content...</div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(POLLINATIONS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: `Provide 5 key learning points about ${topic} for beginners. Format as a simple list.`
+                            }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                const content = await response.text();
+                const points = content.split('\n').filter(line => line.trim()).slice(0, 5);
+
+                const icons = {
+                    'Python Programming': '🐍',
+                    'Machine Learning': '🤖',
+                    'Blockchain': '⛓️',
+                    'Web Development': '🌐',
+                    'Data Science': '📊',
+                    'Algorithms': '🧮',
+                    'DevOps': '⚙️',
+                    'Cybersecurity': '🔒'
+                };
+
+                topicContent.innerHTML = `
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon" style="background: var(--gradient-3); font-size: 32px;">${icons[topic] || '📚'}</div>
+                            <div>
+                                <div class="card-title">${topic}</div>
+                                <div class="card-subtitle">AI-Generated Learning Path</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">KEY CONCEPTS</h3>
+                            ${points.map(point => `
+                                <div style="padding: 14px 16px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 10px; font-size: 14px; font-weight: 500; line-height: 1.6;">
+                                    ✓ ${escapeHtml(point.replace(/^\d+\.\s*/, '').replace(/^-\s*/, ''))}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="btn" style="margin-top: 20px;" onclick="learnMore('${topic}')">
+                            <span>📺 Watch on YouTube</span>
+                        </button>
+                    </div>
+                `;
+            } catch (error) {
+                topicContent.innerHTML = `
+                    <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: var(--error);">
+                        <p style="color: var(--error); font-weight: 600;">⚠️ Error loading content. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function learnMore(topic) {
+            window.open(`https://www.youtube.com/@kreggscode/search?query=${encodeURIComponent(topic)}`, '_blank');
+        }
+
+        // Generate AI Tips
+        async function generateTip() {
+            const loading = document.getElementById('tip-loading');
+            const result = document.getElementById('tip-result');
+            const btn = document.getElementById('tip-btn');
+
+            loading.style.display = 'block';
+            result.innerHTML = '';
+            btn.disabled = true;
+
+            const categories = ['coding best practices', 'career advice for developers', 'productivity tips for programmers', 'motivational advice for coders'];
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+
+            try {
+                const response = await fetch(POLLINATIONS_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: `Give me one powerful, actionable tip about ${randomCategory}. Keep it concise and impactful (2-3 sentences max).`
+                            }
+                        ],
+                        model: 'openai'
+                    })
+                });
+
+                const tip = await response.text();
+
+                loading.style.display = 'none';
+
+                const gradients = [
+                    'var(--gradient-1)',
+                    'var(--gradient-2)',
+                    'var(--gradient-3)',
+                    'var(--gradient-4)'
+                ];
+                const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+
+                result.innerHTML = `
+                    <div class="tip-card" style="background: ${randomGradient};">
+                        <div class="tip-category">${randomCategory}</div>
+                        <div class="tip-text">${escapeHtml(tip)}</div>
+                    </div>
+                `;
+            } catch (error) {
+                loading.style.display = 'none';
+                result.innerHTML = `
+                    <div class="card" style="background: rgba(239, 68, 68, 0.1); border-color: var(--error);">
+                        <p style="color: var(--error); font-weight: 600;">⚠️ Error generating tip. Please try again.</p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Copy Code
+        function copyCode(button) {
+            const codeContent = button.closest('.code-output').querySelector('.code-content');
+            const text = codeContent.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                button.textContent = '✓ Copied!';
+                button.style.color = 'var(--success)';
+                button.style.borderColor = 'var(--success)';
+
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.color = '';
+                    button.style.borderColor = '';
+                }, 2000);
+            });
+        }
+
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Prevent zoom on double tap (iOS)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', (e) => {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+                e.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+
+</html>
