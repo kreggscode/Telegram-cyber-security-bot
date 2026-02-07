@@ -32,7 +32,7 @@ def post_cyber_content():
     # Select 1 topic
     selected_topic = random.choice(CYBER_TOPICS)
     
-    print(f"Selected topic for this run: {selected_topic}")
+    print(f"--- Started posting for topic: {selected_topic} ---")
 
     try:
         # Generate content
@@ -42,12 +42,26 @@ def post_cyber_content():
         print(f"Generating content for {selected_topic}...")
         text_content = ai.generate_text(prompt)
         
+        # Check if generation returned an error message
+        if "AI generation failed" in text_content or "AI Error" in text_content:
+            print(f"FAILED: {text_content}")
+            tg.send_text(f"⚠️ {text_content} for topic: {selected_topic}")
+            return
+
         # Send to Telegram
-        tg.send_text(text_content)
+        print(f"Sending content to Telegram...")
+        resp = tg.send_text(text_content)
+        
+        if resp.status_code == 200:
+            print(f"SUCCESS: Posted content for {selected_topic}")
+        else:
+            print(f"FAILED to send to Telegram: {resp.status_code} - {resp.text}")
+            # Fallback if the whole message was rejected (e.g. too long or bad markdown)
+            tg.send_text(f"⚠️ Error sending content for {selected_topic} to Telegram. (Status: {resp.status_code})", add_footer=False)
         
     except Exception as e:
-        print(f"Error posting for {selected_topic}: {e}")
-        tg.send_text(f"⚠️ Error generating content for {selected_topic}. Please check logs.")
+        print(f"CRITICAL ERROR in post_cyber_content: {e}")
+        tg.send_text(f"⚠️ Critical error generating content for {selected_topic}. Please check system logs.")
 
 
 def main():

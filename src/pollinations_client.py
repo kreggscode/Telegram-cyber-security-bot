@@ -76,8 +76,8 @@ def clean_ai_response(text: str) -> str:
     return cleaned_text
 
 
-def generate_text(prompt: str) -> str:
-    """Generate text from Pollinations.ai using the paid API gateway."""
+def generate_text(prompt: str, max_retries: int = 3) -> str:
+    """Generate text from Pollinations.ai using the paid API gateway with retries."""
     # Add randomization to ensure unique content
     seed = random.randint(1000, 999999)
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -93,26 +93,43 @@ def generate_text(prompt: str) -> str:
     if POLLINATIONS_API_KEY:
         headers["Authorization"] = f"Bearer {POLLINATIONS_API_KEY}"
     
+    # Use gemini-fast if specified, otherwise fallback to openai
+    model = AI_MODEL if AI_MODEL else "openai"
+    
     data = {
-        "model": AI_MODEL if AI_MODEL else "openai",
+        "model": model,
         "messages": [{"role": "user", "content": enhanced_prompt}],
         "seed": seed
     }
     
-    try:
-        resp = requests.post(url, headers=headers, json=data, timeout=60)
-        if resp.status_code == 200:
-            result = resp.json()
-            raw_text = result['choices'][0]['message']['content'].strip()
-            # Clean ads from the response
-            cleaned_text = clean_ai_response(raw_text)
-            return cleaned_text
-        else:
-            print(f"Error calling Pollinations API: {resp.status_code} - {resp.text}")
-    except Exception as e:
-        print(f"Exception during AI generation: {str(e)}")
+    for attempt in range(max_retries):
+        try:
+            print(f"AI Generation attempt {attempt + 1} using model {model}...")
+            resp = requests.post(url, headers=headers, json=data, timeout=120) # Increased timeout
+            
+            if resp.status_code == 200:
+                result = resp.json()
+                if 'choices' in result and len(result['choices']) > 0:
+                    raw_text = result['choices'][0]['message']['content'].strip()
+                    # Clean ads from the response
+                    cleaned_text = clean_ai_response(raw_text)
+                    return cleaned_text
+                else:
+                    print(f"Unexpected API response structure: {result}")
+            elif resp.status_code == 401:
+                print("Error: Unauthorized. Please check your POLLINATIONS_API_KEY.")
+                return "AI Error: Unauthorized. Check API Key."
+            elif resp.status_code == 429:
+                print("Error: Rate limited. Waiting before retry...")
+                time.sleep(5 * (attempt + 1))
+            else:
+                print(f"Error calling Pollinations API: {resp.status_code} - {resp.text}")
+                
+        except Exception as e:
+            print(f"Exception during AI generation attempt {attempt + 1}: {str(e)}")
+            time.sleep(2)
         
-    return "AI generation failed. Please try again."
+    return "AI generation failed after multiple attempts. Please try again later."
 
 
 def image_url(prompt: str) -> str:
