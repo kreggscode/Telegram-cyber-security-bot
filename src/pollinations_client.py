@@ -6,6 +6,9 @@ import re
 from datetime import datetime
 
 
+from .config import POLLINATIONS_API_KEY, AI_MODEL
+
+
 def clean_ai_response(text: str) -> str:
     """Remove Pollinations.ai ads and promotional content from generated text."""
     
@@ -74,32 +77,60 @@ def clean_ai_response(text: str) -> str:
 
 
 def generate_text(prompt: str) -> str:
-    """Generate free-form text from Pollinations.ai with randomization for variety."""
-    # Add randomization to ensure unique content every day
+    """Generate text from Pollinations.ai using the paid API gateway."""
+    # Add randomization to ensure unique content
     seed = random.randint(1000, 999999)
-    timestamp = int(time.time())
     date_str = datetime.now().strftime("%Y-%m-%d")
     
-    # Enhance prompt with context to ensure variety
-    enhanced_prompt = f"{prompt}\n\nIMPORTANT: Make this unique and different. Today's date: {date_str}. Generate fresh, original content not seen before. Seed: {seed}"
+    # Enhance prompt with context
+    enhanced_prompt = f"{prompt}\n\nIMPORTANT: Make this unique and different. Today's date: {date_str}. Generate fresh, original content. Seed: {seed}"
     
-    encoded = urllib.parse.quote(enhanced_prompt)
-    # Add seed parameter to URL for additional randomization
-    url = f"https://text.pollinations.ai/{encoded}?seed={seed}&timestamp={timestamp}"
+    url = "https://gen.pollinations.ai/v1/chat/completions"
     
-    resp = requests.get(url, timeout=30)
-    if resp.status_code == 200:
-        raw_text = resp.text.strip()
-        # Clean ads from the response
-        cleaned_text = clean_ai_response(raw_text)
-        return cleaned_text
+    headers = {
+        "Content-Type": "application/json"
+    }
+    if POLLINATIONS_API_KEY:
+        headers["Authorization"] = f"Bearer {POLLINATIONS_API_KEY}"
+    
+    data = {
+        "model": AI_MODEL if AI_MODEL else "openai",
+        "messages": [{"role": "user", "content": enhanced_prompt}],
+        "seed": seed
+    }
+    
+    try:
+        resp = requests.post(url, headers=headers, json=data, timeout=60)
+        if resp.status_code == 200:
+            result = resp.json()
+            raw_text = result['choices'][0]['message']['content'].strip()
+            # Clean ads from the response
+            cleaned_text = clean_ai_response(raw_text)
+            return cleaned_text
+        else:
+            print(f"Error calling Pollinations API: {resp.status_code} - {resp.text}")
+    except Exception as e:
+        print(f"Exception during AI generation: {str(e)}")
+        
     return "AI generation failed. Please try again."
 
 
-
 def image_url(prompt: str) -> str:
-    """Return an image URL from Pollinations based on prompt with randomization."""
+    """Return an image URL from Pollinations based on prompt with authentication."""
     seed = random.randint(1000, 999999)
     encoded = urllib.parse.quote(prompt)
-    # Add seed for image variety
-    return f"https://image.pollinations.ai/prompt/{encoded}?seed={seed}"
+    
+    # Use the unified gateway for images
+    # We use query param authentication for the URL so it can be passed directly to Telegram
+    base_url = f"https://gen.pollinations.ai/image/{encoded}"
+    params = [
+        f"seed={seed}",
+        "width=1024",
+        "height=1024",
+        "model=flux-large" # Using flux-large for high quality
+    ]
+    
+    if POLLINATIONS_API_KEY:
+        params.append(f"key={POLLINATIONS_API_KEY}")
+        
+    return f"{base_url}?{'&'.join(params)}"

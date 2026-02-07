@@ -40,4 +40,6 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
           TIMEZONE_OFFSET_HOURS: ${{ secrets.TIMEZONE_OFFSET_HOURS }}
+          POLLINATIONS_API_KEY: ${{ secrets.POLLINATIONS_API_KEY }}
+          AI_MODEL: ${{ secrets.AI_MODEL }}
         run: python -m src.main
