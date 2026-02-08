@@ -82,8 +82,8 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
     seed = random.randint(1000, 999999)
     date_str = datetime.now().strftime("%Y-%m-%d")
     
-    # Enhance prompt with context
-    enhanced_prompt = f"{prompt}\n\nIMPORTANT: Make this unique and different. Today's date: {date_str}. Generate fresh, original content. Seed: {seed}"
+    # Minimal context to avoid AI 'dreaming' or discussing the instructions
+    enhanced_prompt = f"{prompt}\n\nSTRICT: Do not include introductory text like 'Certainly' or 'Here is...'. Do not mention the date or seed. Return ONLY the educational content. (Seed: {seed})"
     
     url = "https://gen.pollinations.ai/v1/chat/completions"
     
