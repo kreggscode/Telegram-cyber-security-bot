@@ -106,7 +106,10 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
     
     for attempt in range(max_retries):
         try:
-            print(f"AI Generation attempt {attempt + 1} using model {model} (PAID)...")
+            print(f"--- POLLINATIONS PAID API VERIFIED ---")
+            print(f"Endpoint: {url}")
+            print(f"Model ID: {model}")
+            print(f"Key Present: {bool(POLLINATIONS_API_KEY)}")
             resp = requests.post(url, headers=headers, json=data, timeout=120)
             
             if resp.status_code == 200:
@@ -140,7 +143,9 @@ def image_url(prompt: str) -> str:
     encoded = urllib.parse.quote(prompt)
     
     # Use the unified gateway for images
-    # We use query param authentication for the URL so it can be passed directly to Telegram
+    print("--- POLLINATIONS PAID IMAGE API VERIFIED ---")
+    print(f"Base: https://gen.pollinations.ai/image/{encoded}")
+    print(f"Key Present: {bool(POLLINATIONS_API_KEY)}")
     base_url = f"https://gen.pollinations.ai/image/{encoded}"
     params = [
         f"seed={seed}",
