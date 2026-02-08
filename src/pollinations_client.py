@@ -77,21 +77,23 @@ def clean_ai_response(text: str) -> str:
 
 
 def generate_text(prompt: str, max_retries: int = 3) -> str:
-    """Generate text from Pollinations.ai using the paid API gateway with retries."""
+    """Generate text from Pollinations.ai using the paid API gateway EXCLUSIVELY."""
+    if not POLLINATIONS_API_KEY:
+        print("CRITICAL: POLLINATIONS_API_KEY is missing. Paid API required.")
+        return "AI Error: System configuration missing (API Key)."
+
     # Add randomization to ensure unique content
     seed = random.randint(1000, 999999)
     date_str = datetime.now().strftime("%Y-%m-%d")
     
     # Minimal context to avoid AI 'dreaming' or discussing the instructions
-    enhanced_prompt = f"{prompt}\n\nSTRICT: Do not include introductory text like 'Certainly' or 'Here is...'. Do not mention the date or seed. Return ONLY the educational content. (Seed: {seed})"
+    enhanced_prompt = f"{prompt}\n\nSTRICT: Do not include introductory text like 'Certainly' or 'Here is...'. Do not mention the date or seed. Return ONLY the requested content. (Seed: {seed})"
     
     url = "https://gen.pollinations.ai/v1/chat/completions"
-    
     headers = {
+        "Authorization": f"Bearer {POLLINATIONS_API_KEY}",
         "Content-Type": "application/json"
     }
-    if POLLINATIONS_API_KEY:
-        headers["Authorization"] = f"Bearer {POLLINATIONS_API_KEY}"
     
     # Use gemini-fast if specified, otherwise fallback to openai
     model = AI_MODEL if AI_MODEL else "openai"
@@ -104,8 +106,8 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
     
     for attempt in range(max_retries):
         try:
-            print(f"AI Generation attempt {attempt + 1} using model {model}...")
-            resp = requests.post(url, headers=headers, json=data, timeout=120) # Increased timeout
+            print(f"AI Generation attempt {attempt + 1} using model {model} (PAID)...")
+            resp = requests.post(url, headers=headers, json=data, timeout=120)
             
             if resp.status_code == 200:
                 result = resp.json()
@@ -129,7 +131,7 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
             print(f"Exception during AI generation attempt {attempt + 1}: {str(e)}")
             time.sleep(2)
         
-    return "AI generation failed after multiple attempts. Please try again later."
+    return "AI generation failed after multiple attempts (Paid API)."
 
 
 def image_url(prompt: str) -> str:
