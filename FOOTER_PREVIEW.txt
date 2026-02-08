@@ -1,0 +1,36 @@
+Sample Cybersecurity Post Preview
+================================
+
+🛡️ **SQL Injection (SQLi) Attack** 🛡️
+
+SQL Injection allows attackers to manipulate database queries by injecting malicious SQL code. This vulnerability consistently ranks in the OWASP Top 10.
+
+**⚠️ Code Snippet:**
+```python
+# Vulnerable code
+query = f"SELECT * FROM users WHERE username = '{user_input}'"
+
+# Secure code
+query = "SELECT * FROM users WHERE username = ?"
+cursor.execute(query, (user_input,))
+```
+
+**🐞 Bug Bounty Tip:**
+Test login forms with: `admin' OR '1'='1` to check for SQLi vulnerabilities.
+
+**Mitigation:**
+- Use parameterized queries
+- Implement input validation
+- Apply principle of least privilege
+
+━━━━━━━━━━━━━━━━━━━━
+🔗 **Connect with kreggscode:**
+
+📷 Instagram • ✖️ X/Twitter
+▶️ YouTube • 💬 Telegram
+📘 Facebook Page • 🎮 My Apps
+
+================================
+NOTE: In Telegram, each social media name (Instagram, X/Twitter, etc.) 
+will be a clickable blue link that users can tap to visit your profiles!
+The links are now MUCH BIGGER and easier to click.

@@ -21,8 +21,10 @@ The post MUST include the following structure:
 
 IMPORTANT:
 - DO NOT be repetitive.
+- Keep the entire post UNDER 3000 characters to ensure it fits within Telegram's limits.
 - Make it extremely practical for learners.
 - Use bullet points and emojis to make it readable on mobile.
+- Ensure all Markdown tags like backticks (```), bold (**), or italics (_) are properly closed.
 """
     return base_prompt
 
