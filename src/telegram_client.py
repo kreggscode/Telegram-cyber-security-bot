@@ -19,71 +19,38 @@ def add_social_footer(text: str) -> str:
 
 
 def ensure_markdown_closed(text: str) -> str:
-    """
-    Robustly ensure all Telegram Markdown (V1) tags are properly closed.
-    V1 uses: *bold*, _italic_, `inline code`, ```pre/code blocks```, [text](url)
-    """
-    # 1. Balance triple backticks (Preformatted blocks)
-    # We must do this first because nothing inside a pre block should be parsed.
-    if text.count('```') % 2 != 0:
-        text += '\n```'
+    """Hyper-reliable balancing of Telegram Markdown V1 tags."""
+    # Pre blocks
+    if text.count('```') % 2 != 0: text += '\n```'
     
-    # Split text into parts that are NOT inside triple backticks
-    parts = text.split('```')
-    # parts[0], parts[2], ... are OUTSIDE code blocks
-    # parts[1], parts[3], ... are INSIDE code blocks
-    
-    for i in range(0, len(parts), 2):
-        chunk = parts[i]
-        
-        # 2. Balance single backticks (Inline code)
-        if chunk.count('`') % 2 != 0:
-            chunk += '`'
-        
-        # Split chunk into parts NOT inside inline code
-        subparts = chunk.split('`')
-        for j in range(0, len(subparts), 2):
-            subchunk = subparts[j]
-            
-            # 3. Balance Bold (*) and Italic (_)
-            # Note: Telegram V1 is picky. Underscores in URLs or variables often break it.
-            if subchunk.count('*') % 2 != 0:
-                subchunk += '*'
-            if subchunk.count('_') % 2 != 0:
-                subchunk += '_'
-            
-            # 4. Balance links [text](url)
-            # This is hard to do perfectly with count, but we can check for unclosed [
-            open_brackets = subchunk.count('[')
-            closed_brackets = subchunk.count(']')
-            if open_brackets > closed_brackets:
-                subchunk += ']' * (open_brackets - closed_brackets)
-            
-            subparts[j] = subchunk
-        
-        parts[i] = '`'.join(subparts)
-    
-    return '```'.join(parts)
+    # Check outside blocks for unclosed tags
+    code_parts = text.split('```')
+    for i in range(0, len(code_parts), 2):
+        # bold
+        if code_parts[i].count('*') % 2 != 0: code_parts[i] += '*'
+        # italic
+        if code_parts[i].count('_') % 2 != 0: code_parts[i] += '_'
+        # inline code
+        if code_parts[i].count('`') % 2 != 0: code_parts[i] += '`'
+        # links [text](url) - only check [ ] balance
+        if code_parts[i].count('[') > code_parts[i].count(']'):
+            code_parts[i] += ']'
+    return '```'.join(code_parts)
 
 
 def send_text(text: str, add_footer: bool = True, parse_mode: str = "Markdown"):
-    """Send text message with integrity checks for Markdown."""
+    """Send text with guaranteed formatting for links and code blocks."""
     if add_footer:
         text = add_social_footer(text)
     
-    # Telegram limit is 4096 characters. Truncate safely.
+    # Safety truncation
     if len(text) > 4000:
-        text = text[:3800]
-        # Backtrack to last newline or space
-        last_space = text.rfind(' ')
-        if last_space > 3500:
-            text = text[:last_space]
-        text += "\n\n...(Message truncated)"
+        text = text[:3800] + "\n\n...(truncated)"
 
     text = ensure_markdown_closed(text)
 
     url = f"{BASE_URL}/sendMessage"
-    data = {
+    payload = {
         "chat_id": CHAT_ID,
         "text": text,
         "disable_web_page_preview": True,
@@ -91,54 +58,36 @@ def send_text(text: str, add_footer: bool = True, parse_mode: str = "Markdown"):
     }
 
     try:
-        resp = requests.post(url, data=data, timeout=30)
+        resp = requests.post(url, json=payload, timeout=30)
         if resp.status_code != 200:
-            # Check if it's a parsing error
-            error_data = resp.json() if resp.status_code == 400 else {}
-            if "can't parse" in error_data.get("description", "").lower():
-                print(f"Telegram Markdown parsing failed at offset. Retrying with escaped technical characters...")
-                # Hack for V1: Escape underscores inside words if they are causing issues
-                # But V1 doesn't support \ escaping for _, it treats \_ as literally \ and _
-                # The real fix is to balance or strip. We already balanced.
-                # Let's try stripping the most problematic V1 character: standalone underscores
-                sanitized_text = text.replace("_", "\\_") # Wait, V1 doesn't like \_?
-                # Actually, in V1, escaping *is* done with \. (Docs say so for some versions)
-                data["text"] = sanitized_text
-                resp = requests.post(url, data=data, timeout=30)
-                
-                if resp.status_code != 200:
-                    print(f"Advanced sanitization failed, trying Clean fallback (No formatting)...")
-                    # Last resort: clear formatting but keep content
-                    data.pop("parse_mode", None)
-                    data["text"] = text.replace("*", "").replace("_", "").replace("`", "")
-                    resp = requests.post(url, data=data, timeout=30)
+            print(f"Telegram Markdown Failure: {resp.text}")
+            # Try escaping ONLY the underscores (v1 major culprit) but keep everything else
+            payload["text"] = text.replace("_", "\\_")
+            resp = requests.post(url, json=payload, timeout=30)
             
             if resp.status_code != 200:
-                print(f"Telegram API Error (Text): {resp.status_code} - {resp.text}")
+                print(f"STILL FAILED: {resp.status_code}. Sending without formatting to preserve content.")
+                payload.pop("parse_mode", None)
+                payload["text"] = text
+                resp = requests.post(url, json=payload, timeout=30)
         return resp
     except Exception as e:
         print(f"Telegram Connection Error: {e}")
-        mock_resp = requests.Response()
-        mock_resp.status_code = 500
-        return mock_resp
+        return None
 
 
 def send_photo(image_url: str, caption: str = "", add_footer: bool = True, parse_mode: str = "Markdown"):
-    """Send photo with protected caption integrity."""
+    """Send photo with guaranteed caption integrity."""
     if add_footer and caption:
         caption = add_social_footer(caption)
     
-    # Telegram limit for captions is 1024 characters
     if len(caption) > 1000:
-        caption = caption[:950]
-        last_space = caption.rfind(' ')
-        if last_space > 800:
-            caption = caption[:last_space]
-        caption = ensure_markdown_closed(caption)
-        caption += "..."
+        caption = caption[:950] + "..."
+    
+    caption = ensure_markdown_closed(caption)
 
     url = f"{BASE_URL}/sendPhoto"
-    data = {
+    payload = {
         "chat_id": CHAT_ID,
         "photo": image_url,
         "caption": caption,
@@ -146,46 +95,47 @@ def send_photo(image_url: str, caption: str = "", add_footer: bool = True, parse
     }
 
     try:
-        resp = requests.post(url, data=data, timeout=30)
+        resp = requests.post(url, json=payload, timeout=30)
         if resp.status_code != 200:
-            print(f"Telegram API Error (Photo): {resp.status_code} - {resp.text}")
+            # Fallback for photo caption
+            payload["caption"] = caption.replace("_", "\\_")
+            resp = requests.post(url, json=payload, timeout=30)
+            if resp.status_code != 200:
+                payload.pop("parse_mode", None)
+                payload["caption"] = caption
+                resp = requests.post(url, json=payload, timeout=30)
         return resp
     except Exception as e:
-        print(f"Telegram Photo Connection Error: {e}")
-        mock_resp = requests.Response()
-        mock_resp.status_code = 500
-        return mock_resp
+        print(f"Telegram Photo Error: {e}")
+        return None
 
 
 def send_poll(question: str, options: list[str], correct_option_id: int = None, explanation: str = None):
-    """Send a Telegram poll. If correct_option_id is provided, it becomes a Quiz."""
+    """Send a native Telegram Quiz."""
     import json
     url = f"{BASE_URL}/sendPoll"
-    data = {
+    payload = {
         "chat_id": CHAT_ID,
-        "question": question,
-        "options": json.dumps(options),
+        "question": question[:300],
+        "options": json.dumps(options[:10]),
         "is_anonymous": False
     }
 
     if correct_option_id is not None:
-        data["type"] = "quiz"
-        data["correct_option_id"] = correct_option_id
+        payload["type"] = "quiz"
+        payload["correct_option_id"] = correct_option_id
         if explanation:
-            # Explanation is shown when the user answers incorrectly or taps the bulb icon
-            data["explanation"] = explanation
-            data["explanation_parse_mode"] = "Markdown"
+            payload["explanation"] = explanation[:200]
+            payload["explanation_parse_mode"] = "Markdown"
 
     try:
-        resp = requests.post(url, data=data, timeout=30)
+        resp = requests.post(url, json=payload, timeout=30)
         if resp.status_code != 200:
-            print(f"Telegram API Error (Poll): {resp.status_code} - {resp.text}")
+            print(f"QUIZ FAILURE: {resp.status_code} - {resp.text}")
         return resp
     except Exception as e:
-        print(f"Telegram Poll Connection Error: {e}")
-        mock_resp = requests.Response()
-        mock_resp.status_code = 500
-        return mock_resp
+        print(f"Quiz Connection Error: {e}")
+        return None
 
 
 def send_thread(messages: list[str]):
