@@ -25,6 +25,7 @@ IMPORTANT:
 - Make it extremely practical for learners.
 - Use bullet points and emojis to make it readable on mobile.
 - Ensure all Markdown tags like backticks (```), bold (**), or italics (_) are properly closed.
+- STRICT: Only use underscores (_) inside code blocks or properly closed italic tags. Never leave a single underscore hanging in plain text.
 """
     return base_prompt
 

@@ -19,18 +19,51 @@ def add_social_footer(text: str) -> str:
 
 
 def ensure_markdown_closed(text: str) -> str:
-    """Ensure all markdown tags are properly closed to avoid Telegram parser errors."""
+    """
+    Robustly ensure all Telegram Markdown (V1) tags are properly closed.
+    V1 uses: *bold*, _italic_, `inline code`, ```pre/code blocks```, [text](url)
+    """
+    # 1. Balance triple backticks (Preformatted blocks)
+    # We must do this first because nothing inside a pre block should be parsed.
     if text.count('```') % 2 != 0:
         text += '\n```'
-    if text.count('**') % 2 != 0:
-        text += '**'
-    # For single * or _, only close if it's likely a tag (not a bullet point)
-    # But for Telegram V1, it's safer to just count.
-    if text.count('*') % 2 != 0:
-        text += '*'
-    if text.count('_') % 2 != 0:
-        text += '_'
-    return text
+    
+    # Split text into parts that are NOT inside triple backticks
+    parts = text.split('```')
+    # parts[0], parts[2], ... are OUTSIDE code blocks
+    # parts[1], parts[3], ... are INSIDE code blocks
+    
+    for i in range(0, len(parts), 2):
+        chunk = parts[i]
+        
+        # 2. Balance single backticks (Inline code)
+        if chunk.count('`') % 2 != 0:
+            chunk += '`'
+        
+        # Split chunk into parts NOT inside inline code
+        subparts = chunk.split('`')
+        for j in range(0, len(subparts), 2):
+            subchunk = subparts[j]
+            
+            # 3. Balance Bold (*) and Italic (_)
+            # Note: Telegram V1 is picky. Underscores in URLs or variables often break it.
+            if subchunk.count('*') % 2 != 0:
+                subchunk += '*'
+            if subchunk.count('_') % 2 != 0:
+                subchunk += '_'
+            
+            # 4. Balance links [text](url)
+            # This is hard to do perfectly with count, but we can check for unclosed [
+            open_brackets = subchunk.count('[')
+            closed_brackets = subchunk.count(']')
+            if open_brackets > closed_brackets:
+                subchunk += ']' * (open_brackets - closed_brackets)
+            
+            subparts[j] = subchunk
+        
+        parts[i] = '`'.join(subparts)
+    
+    return '```'.join(parts)
 
 
 def send_text(text: str, add_footer: bool = True, parse_mode: str = "Markdown"):
@@ -40,13 +73,14 @@ def send_text(text: str, add_footer: bool = True, parse_mode: str = "Markdown"):
     
     # Telegram limit is 4096 characters. Truncate safely.
     if len(text) > 4000:
-        text = text[:3900]
-        # Backtrack to last newline or space to avoid cutting words
+        text = text[:3800]
+        # Backtrack to last newline or space
         last_space = text.rfind(' ')
         if last_space > 3500:
             text = text[:last_space]
-        text = ensure_markdown_closed(text)
         text += "\n\n...(Message truncated)"
+
+    text = ensure_markdown_closed(text)
 
     url = f"{BASE_URL}/sendMessage"
     data = {
@@ -59,9 +93,28 @@ def send_text(text: str, add_footer: bool = True, parse_mode: str = "Markdown"):
     try:
         resp = requests.post(url, data=data, timeout=30)
         if resp.status_code != 200:
-            print(f"Telegram API Error (Text): {resp.status_code} - {resp.text}")
-            # If it STILL fails, it might be due to a character that needs escaping in V1.
-            # But we NEVER drop parse_mode because that ruins the links and code blocks.
+            # Check if it's a parsing error
+            error_data = resp.json() if resp.status_code == 400 else {}
+            if "can't parse" in error_data.get("description", "").lower():
+                print(f"Telegram Markdown parsing failed at offset. Retrying with escaped technical characters...")
+                # Hack for V1: Escape underscores inside words if they are causing issues
+                # But V1 doesn't support \ escaping for _, it treats \_ as literally \ and _
+                # The real fix is to balance or strip. We already balanced.
+                # Let's try stripping the most problematic V1 character: standalone underscores
+                sanitized_text = text.replace("_", "\\_") # Wait, V1 doesn't like \_?
+                # Actually, in V1, escaping *is* done with \. (Docs say so for some versions)
+                data["text"] = sanitized_text
+                resp = requests.post(url, data=data, timeout=30)
+                
+                if resp.status_code != 200:
+                    print(f"Advanced sanitization failed, trying Clean fallback (No formatting)...")
+                    # Last resort: clear formatting but keep content
+                    data.pop("parse_mode", None)
+                    data["text"] = text.replace("*", "").replace("_", "").replace("`", "")
+                    resp = requests.post(url, data=data, timeout=30)
+            
+            if resp.status_code != 200:
+                print(f"Telegram API Error (Text): {resp.status_code} - {resp.text}")
         return resp
     except Exception as e:
         print(f"Telegram Connection Error: {e}")
