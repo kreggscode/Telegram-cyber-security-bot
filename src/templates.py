@@ -28,8 +28,32 @@ IMPORTANT:
 """
     return base_prompt
 
+def get_quiz_prompt(topic: str) -> str:
+    """
+    Generates a prompt for a cybersecurity quiz question.
+    """
+    return f"""
+Topic: {topic}
+Task: Create ONE challenging multiple-choice quiz question about this topic for a Telegram Quiz.
+
+STRICT FORMAT:
+Question: [The question text]
+A: [Option 1]
+B: [Option 2]
+C: [Option 3]
+D: [Option 4]
+Correct: [Answer Letter, e.g., A]
+Explanation: [Very brief explanation of why that's correct, max 1 sentence]
+
+RULES:
+- Keep the question clear and concise.
+- Options must be plausible but only one correct.
+- NO introductory or concluding text.
+"""
+
 TEXT_TEMPLATES = {
-    "cyber_prompt": get_cyber_prompt
+    "cyber_prompt": get_cyber_prompt,
+    "quiz_prompt": get_quiz_prompt
 }
 
 IMAGE_TEMPLATES = {

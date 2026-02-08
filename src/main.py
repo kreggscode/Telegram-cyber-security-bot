@@ -54,6 +54,49 @@ def post_cyber_content():
         
         if resp.status_code == 200:
             print(f"SUCCESS: Posted content for {selected_topic}")
+            
+            # --- NEW: POST QUIZ BASED ON TOPIC ---
+            print(f"Generating quiz for {selected_topic}...")
+            quiz_prompt_func = TEXT_TEMPLATES["quiz_prompt"]
+            quiz_prompt = quiz_prompt_func(selected_topic)
+            quiz_raw = ai.generate_text(quiz_prompt)
+            
+            # Parse Quiz format
+            try:
+                # Look for lines starting with Question:, A:, B:, C:, D:, Correct:, Explanation:
+                lines = [l.strip() for l in quiz_raw.split('\n') if l.strip()]
+                q_text = ""
+                options = []
+                correct_letter = ""
+                explanation = ""
+                
+                for line in lines:
+                    if line.lower().startswith("question:"):
+                        q_text = line.split(":", 1)[1].strip()
+                    elif line.upper().startswith("A:"):
+                        options.append(line.split(":", 1)[1].strip())
+                    elif line.upper().startswith("B:"):
+                        options.append(line.split(":", 1)[1].strip())
+                    elif line.upper().startswith("C:"):
+                        options.append(line.split(":", 1)[1].strip())
+                    elif line.upper().startswith("D:"):
+                        options.append(line.split(":", 1)[1].strip())
+                    elif line.lower().startswith("correct:"):
+                        correct_letter = line.split(":", 1)[1].strip().upper()
+                    elif line.lower().startswith("explanation:"):
+                        explanation = line.split(":", 1)[1].strip()
+                
+                letter_to_index = {"A": 0, "B": 1, "C": 2, "D": 3}
+                correct_id = letter_to_index.get(correct_letter[0] if correct_letter else "A", 0)
+                
+                if q_text and len(options) >= 2:
+                    print(f"Sending quiz for {selected_topic}...")
+                    tg.send_poll(q_text, options, correct_option_id=correct_id, explanation=explanation)
+                else:
+                    print(f"Quiz parsing failed for {selected_topic}. Raw: {quiz_raw[:100]}")
+            except Exception as quiz_err:
+                print(f"Error processing quiz: {quiz_err}")
+                
         else:
             print(f"FAILED to send to Telegram: {resp.status_code} - {resp.text}")
             # Fallback if the whole message was rejected (e.g. too long or bad markdown)

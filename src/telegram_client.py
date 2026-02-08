@@ -104,7 +104,8 @@ def send_photo(image_url: str, caption: str = "", add_footer: bool = True, parse
         return mock_resp
 
 
-def send_poll(question: str, options: list[str]):
+def send_poll(question: str, options: list[str], correct_option_id: int = None, explanation: str = None):
+    """Send a Telegram poll. If correct_option_id is provided, it becomes a Quiz."""
     import json
     url = f"{BASE_URL}/sendPoll"
     data = {
@@ -113,8 +114,25 @@ def send_poll(question: str, options: list[str]):
         "options": json.dumps(options),
         "is_anonymous": False
     }
-    resp = requests.post(url, data=data)
-    return resp
+
+    if correct_option_id is not None:
+        data["type"] = "quiz"
+        data["correct_option_id"] = correct_option_id
+        if explanation:
+            # Explanation is shown when the user answers incorrectly or taps the bulb icon
+            data["explanation"] = explanation
+            data["explanation_parse_mode"] = "Markdown"
+
+    try:
+        resp = requests.post(url, data=data, timeout=30)
+        if resp.status_code != 200:
+            print(f"Telegram API Error (Poll): {resp.status_code} - {resp.text}")
+        return resp
+    except Exception as e:
+        print(f"Telegram Poll Connection Error: {e}")
+        mock_resp = requests.Response()
+        mock_resp.status_code = 500
+        return mock_resp
 
 
 def send_thread(messages: list[str]):
