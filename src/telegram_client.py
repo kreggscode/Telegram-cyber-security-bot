@@ -134,7 +134,7 @@ def send_poll(question: str, options: list[str], correct_option_id: int = None, 
     payload = {
         "chat_id": CHAT_ID,
         "question": question[:300],
-        "options": json.dumps(options[:10]),
+        "options": options[:10],
         "is_anonymous": True
     }
 

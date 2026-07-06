@@ -48,6 +48,10 @@ def post_cyber_content():
             tg.send_text(f"⚠️ {text_content} for topic: {selected_topic}")
             return
 
+        # Append discoverability hashtags for SEO
+        hashtags = "\n\n#CyberSecurity #EthicalHacking #InfoSec #PenetrationTesting #Hacking #BugBounty #AppSec #SecOps #SecurityAlert #LearnHacking"
+        text_content += hashtags
+
         # Send to Telegram
         print(f"Sending content to Telegram...")
         resp = tg.send_text(text_content)
