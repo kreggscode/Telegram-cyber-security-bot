@@ -46,7 +46,7 @@ def post_cyber_content():
         if "AI generation failed" in text_content or "AI Error" in text_content:
             print(f"FAILED: {text_content}")
             tg.send_text(f"⚠️ {text_content} for topic: {selected_topic}")
-            return
+            raise RuntimeError(f"AI Generation Failed: {text_content}")
 
         # Append discoverability hashtags for SEO
         hashtags = "\n\n#CyberSecurity #EthicalHacking #InfoSec #PenetrationTesting #Hacking #BugBounty #AppSec #SecOps #SecurityAlert #LearnHacking"
@@ -108,10 +108,12 @@ def post_cyber_content():
         else:
             status = resp.status_code if resp else "No Response"
             print(f"FAILED to send to Telegram: {status}")
+            raise RuntimeError(f"Telegram send failed with status: {status}")
         
     except Exception as e:
         print(f"CRITICAL ERROR in post_cyber_content: {e}")
         tg.send_text(f"⚠️ Critical error generating content for {selected_topic}. Please check system logs.")
+        raise
 
 
 def main():
