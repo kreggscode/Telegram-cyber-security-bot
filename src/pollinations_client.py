@@ -138,23 +138,6 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
 
 
 def image_url(prompt: str) -> str:
-    """Return an image URL from Pollinations based on prompt with authentication."""
-    seed = random.randint(1000, 999999)
-    encoded = urllib.parse.quote(prompt)
-    
-    # Use the unified gateway for images
-    print("--- POLLINATIONS PAID IMAGE API VERIFIED ---")
-    print(f"Base: https://gen.pollinations.ai/image/{encoded}")
-    print(f"Key Present: {bool(POLLINATIONS_API_KEY)}")
-    base_url = f"https://gen.pollinations.ai/image/{encoded}"
-    params = [
-        f"seed={seed}",
-        "width=1024",
-        "height=1024",
-        "model=flux-large" # Using flux-large for high quality
-    ]
-    
-    if POLLINATIONS_API_KEY:
-        params.append(f"key={POLLINATIONS_API_KEY}")
-        
-    return f"{base_url}?{'&'.join(params)}"
+    """Image generation DISABLED to stop Pollinations flux image costs."""
+    print("--- POLLINATIONS IMAGE GENERATION DISABLED ---")
+    return None
