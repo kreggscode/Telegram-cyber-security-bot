@@ -1,0 +1,35 @@
+name: Keepalive Heartbeat
+
+on:
+  schedule:
+    # Runs at 00:00 UTC on the 1st and 20th of each month (twice a month)
+    # Safely resets GitHub's 60-day inactivity timer while using minimal runner seconds (<15s/month).
+    - cron: '0 0 1,20 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Send Heartbeat to Isolated Branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Switch to an isolated orphan branch so the 'main' branch history remains 100% clean
+          git checkout --orphan bot-heartbeat
+          git rm -rf . > /dev/null 2>&1 || true
+          
+          # Write single heartbeat timestamp
+          echo "Heartbeat: $(date -u)" > .heartbeat
+          git add .heartbeat
+          git commit -m "chore(heartbeat): repository activity [skip ci]"
+          
+          # Force push to keep exactly 1 commit on bot-heartbeat forever (no bloat)
+          git push --force origin bot-heartbeat
