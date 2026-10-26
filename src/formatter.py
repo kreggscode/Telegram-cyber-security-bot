@@ -195,3 +195,14 @@ def markdown_to_telegram_html(text: str) -> str:
 def safe_truncate_html(text: str, max_chars: int = 4000) -> str:
     """Ensure HTML stays strictly within Telegram limits while closing all open tags."""
     return sanitize_and_balance_telegram_html(text, max_chars=max_chars)
+
+
+def plain_text_fallback_formatter(text: str) -> str:
+    """
+    Fallback formatter that strips problematic inline HTML tags while
+    preserving code blocks and structure so code is never lost.
+    """
+    # Strip HTML tags
+    cleaned = re.sub(r"</?(?:b|i|u|s|a|blockquote)[^>]*>", "", text)
+    return cleaned
+
