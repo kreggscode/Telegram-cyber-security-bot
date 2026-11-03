@@ -10,7 +10,7 @@ CHAT_ID = os.getenv("CHAT_ID", "").strip()
 TIMEZONE_OFFSET_HOURS = float(os.getenv("TIMEZONE_OFFSET_HOURS", "5.5"))  # default IST
 
 POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY", "").strip()
-AI_MODEL = os.getenv("AI_MODEL", "openai").strip()
+AI_MODEL = os.getenv("AI_MODEL", "openai/gpt-5.4-nano").strip()
 
 if not BOT_TOKEN or not CHAT_ID:
     raise RuntimeError("BOT_TOKEN or CHAT_ID is not set. Check your environment or .env file.")
